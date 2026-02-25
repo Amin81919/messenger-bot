@@ -43,7 +43,6 @@ app.post("/webhook", async (req, res) => {
           const sender = event.sender.id;
           const text = event.message.text.toLowerCase();
 
-<<<<<<< HEAD
       let reply = null;
 
       if (text.includes("giá")) {
@@ -54,16 +53,6 @@ app.post("/webhook", async (req, res) => {
         // Nếu không match rule → gọi AI
         reply = await askGemini(text);
       }
-=======
-          console.log("📩 From:", sender);
-          console.log("💬 Message:", text);
-
-          let reply = "T chưa hiểu 🤖";
-
-          if (text.includes("hello") || text.includes("hi")) {
-            reply = "Chào bạn 👋";
-          }
->>>>>>> 332b1865244bb8eb52d770e6aa7136784f288f97
 
           if (text.includes("giá")) {
             reply = "Giá 199k nha 😎";
