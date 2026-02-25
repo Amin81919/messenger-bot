@@ -1,6 +1,7 @@
 const express = require("express");
 const bodyParser = require("body-parser");
 const axios = require("axios");
+const askGemini = require("./ai");
 
 const app = express();
 app.use(bodyParser.json());
@@ -44,14 +45,15 @@ app.post("/webhook", async (req, res) => {
 
       console.log("User message:", text);
 
-      let reply = "T chưa hiểu 🤖";
+      let reply = null;
 
       if (text.includes("giá")) {
         reply = "Giá 199k nha 😎";
-      }
-
-      if (text.includes("hello") || text.includes("hi")) {
+      } else if (text.includes("hello") || text.includes("hi")) {
         reply = "Chào bạn 👋";
+      } else {
+        // Nếu không match rule → gọi AI
+        reply = await askGemini(text);
       }
 
       // Gửi tin nhắn lại
