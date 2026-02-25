@@ -6,14 +6,14 @@ const askGemini = require("./ai");
 const app = express();
 app.use(bodyParser.json());
 
-// 🔐 DÁN TOKEN THẬT CỦA M VÀO ĐÂY
+// ============================
+// 🔐 ENV VARIABLES
+// ============================
 const PAGE_ACCESS_TOKEN = process.env.PAGE_ACCESS_TOKEN;
-// 🔑 TỰ ĐẶT (phải giống trong Meta webhook)
-const VERIFY_TOKEN = "minh";
-
+const VERIFY_TOKEN = process.env.VERIFY_TOKEN || "minh";
 
 // ============================
-// 1️⃣ Verify webhook
+// 1️⃣ VERIFY WEBHOOK
 // ============================
 app.get("/webhook", (req, res) => {
   const mode = req.query["hub.mode"];
@@ -21,30 +21,29 @@ app.get("/webhook", (req, res) => {
   const challenge = req.query["hub.challenge"];
 
   if (mode === "subscribe" && token === VERIFY_TOKEN) {
-    console.log("Webhook verified!");
+    console.log("✅ Webhook verified");
     return res.status(200).send(challenge);
-  } else {
-    return res.sendStatus(403);
   }
+
+  return res.sendStatus(403);
 });
 
-
 // ============================
-// 2️⃣ Nhận tin nhắn
+// 2️⃣ RECEIVE MESSAGES
 // ============================
 app.post("/webhook", async (req, res) => {
   const body = req.body;
 
   if (body.object === "page") {
-    const entry = body.entry[0];
-    const event = entry.messaging[0];
 
-    if (event.message && event.message.text) {
-      const sender = event.sender.id;
-      const text = event.message.text.toLowerCase();
+    for (const entry of body.entry) {
+      for (const event of entry.messaging) {
 
-      console.log("User message:", text);
+        if (event.message && event.message.text) {
+          const sender = event.sender.id;
+          const text = event.message.text.toLowerCase();
 
+<<<<<<< HEAD
       let reply = null;
 
       if (text.includes("giá")) {
@@ -55,15 +54,40 @@ app.post("/webhook", async (req, res) => {
         // Nếu không match rule → gọi AI
         reply = await askGemini(text);
       }
+=======
+          console.log("📩 From:", sender);
+          console.log("💬 Message:", text);
 
-      // Gửi tin nhắn lại
-      await axios.post(
-        `https://graph.facebook.com/v17.0/me/messages?access_token=${PAGE_ACCESS_TOKEN}`,
-        {
-          recipient: { id: sender },
-          message: { text: reply },
+          let reply = "T chưa hiểu 🤖";
+
+          if (text.includes("hello") || text.includes("hi")) {
+            reply = "Chào bạn 👋";
+          }
+>>>>>>> 332b1865244bb8eb52d770e6aa7136784f288f97
+
+          if (text.includes("giá")) {
+            reply = "Giá 199k nha 😎";
+          }
+
+          try {
+            await axios.post(
+              "https://graph.facebook.com/v17.0/me/messages",
+              {
+                recipient: { id: sender },
+                message: { text: reply },
+              },
+              {
+                params: { access_token: PAGE_ACCESS_TOKEN },
+              }
+            );
+          } catch (error) {
+            console.error(
+              "❌ Send error:",
+              error.response?.data || error.message
+            );
+          }
         }
-      );
+      }
     }
 
     return res.status(200).send("EVENT_RECEIVED");
@@ -72,12 +96,22 @@ app.post("/webhook", async (req, res) => {
   res.sendStatus(404);
 });
 
+// ============================
+// 🔐 PRIVACY POLICY (FOR REVIEW)
+// ============================
+app.get("/privacy", (req, res) => {
+  res.send(`
+    <h1>Privacy Policy</h1>
+    <p>This Messenger bot does not store personal data.</p>
+    <p>Data is only used to respond to messages.</p>
+  `);
+});
 
 // ============================
-// 3️⃣ Start server
+// 🚀 START SERVER
 // ============================
 const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT}`);
+  console.log("🚀 Server running on port " + PORT);
 });
